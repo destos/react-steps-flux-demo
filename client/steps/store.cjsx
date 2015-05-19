@@ -8,7 +8,7 @@ _steps = [
   {
     guid: Guid.create()
     name: 'step name fo realz'
-    sub_steps: [{
+    actions: [{
         guid: Guid.create()
         action: 'move the screw'
       },{
@@ -18,7 +18,7 @@ _steps = [
   }, {
     guid: Guid.create()
     name: 'another step name'
-    sub_steps: [{
+    actions: [{
         guid: Guid.create()
         action: 'move the screw'
       },{
@@ -28,7 +28,7 @@ _steps = [
   } , {
     guid: Guid.create()
     name: 'so many steps'
-    sub_steps: [{
+    actions: [{
         guid: Guid.create()
         action: 'move the screw'
       },{
@@ -89,10 +89,13 @@ module.exports = {
   template: ->
     guid: Guid.create()
     name: ''
-    sub_steps: [{
+    actions: [{
       guid: Guid.create()
-      action: 'default action'
+      action: ''
     }]
+  action_template: ->
+    guid: Guid.create()
+    action: ''
   StepStore: StepStore
   mcFly: mcFly
 }
