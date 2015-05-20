@@ -2,6 +2,8 @@ React = require('react')
 # LinkedStateMixin = require('react/lib/LinkedStateMixin')
 
 LinkedStateMixin = require('./react-catalyst/LinkedStateMixin').LinkedStateMixin
+ClickOutsideMixin = require('react-onclickoutside')
+ContentEditable = require('react-wysiwyg')
 
 # react-bootstrap
 Button = require 'react-bootstrap/lib/Button'
@@ -13,6 +15,7 @@ ListGroup = require 'react-bootstrap/lib/ListGroup'
 ListGroupItem = require 'react-bootstrap/lib/ListGroupItem'
 Input = require 'react-bootstrap/lib/Input'
 Glyphicon = require 'react-bootstrap/lib/Glyphicon'
+Thumbnail = require 'react-bootstrap/lib/Thumbnail'
 
 {StepStore, template, action_template} = require './steps/store'
 
@@ -23,6 +26,9 @@ DraggableMixin = {
     return _.includes e.target.parentNode.children, @dragged
 
   dragStart: (e) ->
+    # prevent dragging if editing an action
+    if @state.editingAction
+      return
     @dragged = e.currentTarget
     e.dataTransfer.effectAllowed = 'move'
     # Firefox requires calling dataTransfer.setData
@@ -77,35 +83,121 @@ DraggableMixin = {
     @placeholder.appendChild(document.createTextNode("drop here"))
 }
 
+
+EdiableActionItem = React.createClass
+  mixins: [ClickOutsideMixin]
+
+  getInitialState: ->
+    editing: false
+
+  onChange: (text) ->
+    @setState action: text
+
+  handleClickOutside: ->
+    @setState(editing: false)
+
+  startEditing: ->
+    @setState(editing: true)
+
+  render: ->
+    action = @props.action
+    actionNum = @props.num
+
+    editing = @state.editing
+    grabIcon = null
+    # turn on grab icon if we're not editing the action
+    if not editing
+      grabIcon = <Glyphicon className="pull-right" style={cursor: 'move'} glyph="menu-hamburger"></Glyphicon>
+    <ListGroupItem
+        draggable="true"
+        data-id={actionNum}
+        className="clearfix"
+        style={cursor: 'pointer'}
+        onDoubleClick={@startEditing}
+        {...@props}>
+      <div className="pull-left">
+        {String.fromCharCode(actionNum + 97)}.&nbsp;
+      </div>
+      {grabIcon}
+      <div
+        style={marginRight: '30px'}>
+        {action.action}
+      </div>
+    </ListGroupItem>
+
+
 StepDisplay = React.createClass
 
-  mixins: [DraggableMixin]
+  mixins: [DraggableMixin, ClickOutsideMixin]
 
   removeStep: ->
     stepActions.removeStep(@props.step)
 
+  getInitialState: ->
+    highlightedAction: _.first(@props.step.actions)
+    editingAction: undefined
+
+  setHighlighted: (action) ->
+    @setState(highlightedAction: action)
+
+  handleClickOutside: (e) ->
+    # click outside and then save the action being edited
+    if @state.editingAction
+      console.log 'clicking outside, cancel edit', arguments, @
+      @setState(editingAction: undefined)
+      # update with step and it's current text changes
+      stepActions.updateStep(@props.step)
+
   render: ->
     step = @props.step
-    actions = _.map step.actions, (action, action_num) =>
-      <ListGroupItem
-          draggable="true"
-          data-id={action_num}
-          onDragEnd={@dragEnd}
-          onDragStart={@dragStart}
-          key={action.guid.toString()}
-          style={cursor: 'move'} >
-        {String.fromCharCode(action_num+97)}. {action.action}
-        <Glyphicon className="pull-right" glyph="menu-hamburger"></Glyphicon>
-      </ListGroupItem>
+    actions = _.map step.actions, (action, actionNum) =>
+      <EdiableActionItem
+        key={action.guid.toString()}
+        num={actionNum}
+        action={action}
+        editingAction={@state.editingAction}
+        onDragEnd={@dragEnd}
+        onDragStart={@dragStart}
+        onMouseOver={@setHighlighted.bind(@, action)}>
+      </EdiableActionItem>
 
-    <div class="step">
+    images = _.map step.actions, (action, action_num) =>
+      <Col xs={4} key={action.guid.toString()}>
+        <Thumbnail
+          src={action.image}
+          style={cursor: 'pointer'}
+          onClick={@setHighlighted.bind(@, action)}></Thumbnail>
+      </Col>
+
+    if @state.highlightedAction
+      image = <Thumbnail src={@state.highlightedAction.image}>
+        <span>
+          {@state.highlightedAction.action}
+        </span>
+      </Thumbnail>
+    else
+      image = undefined
+
+    <div className="step">
       <div className="clearfix">
         <h2 className="pull-left">{@props.num}. {step.name}</h2>
         <Button className="pull-right" style={marginTop: '22px'} bsStyle="danger" onClick={@removeStep}>remove</Button>
       </div>
-      <ListGroup onDragOver={@dragOver}>
-        {actions}
-      </ListGroup>
+      <Row>
+        <Col xs={12} md={7}>
+          <h3>images</h3>
+          {image}
+          <Row>
+            {images}
+          </Row>
+        </Col>
+        <Col xs={12} md={5}>
+          <h3>actions</h3>
+          <ListGroup onDragOver={@dragOver}>
+            {actions}
+          </ListGroup>
+        </Col>
+      </Row>
     </div>
 
 
@@ -127,10 +219,6 @@ StepList = React.createClass
 
 StepCreatorForm = React.createClass
   mixins: [LinkedStateMixin]
-
-  # propTypes:
-  #   onUserInput: React.PropTypes.func.isRequired
-  #   onClear: React.PropTypes.func.isRequired
 
   getDefaultProps: ->
     lengthRequirement: 5
@@ -167,7 +255,6 @@ StepCreatorForm = React.createClass
     else
       return 'success'
 
-
   moreSubSteps: ->
     @state.actions.push(action_template())
     @setState @state
@@ -178,14 +265,15 @@ StepCreatorForm = React.createClass
         type="text"
         label={"action (" + String.fromCharCode(i+97) + ")"}
         bsStyle={@validationAction(i)}
-        valueLink={@linkState('actions.'+i+'.action')}>
+        ref={"action.#{i}"}
+        valueLink={@linkState("actions.#{i}.action")}>
       </Input>
 
     <div>
       <Input
         type='text'
         label='step name'
-        placeholder="name"
+        ref='name'
         help="the name used to referenced this step."
         bsStyle={@validationName()}
         valueLink={@linkState('name')}>
@@ -211,11 +299,9 @@ StepsController = React.createClass
   render: ->
     <Grid>
       <Row>
-        <Col xs={6}>
+        <Col xs={12} md={10} mdOffset={1}>
           <h2>List of steps</h2>
           <StepList steps={@state.steps}/>
-        </Col>
-        <Col xs={6}>
           <h2>Add a new step</h2>
           <StepCreatorForm/>
         </Col>

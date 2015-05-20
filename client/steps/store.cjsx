@@ -1,45 +1,38 @@
 Guid = require 'guid'
 McFly = require 'mcfly'
 _ = require 'lodash'
+faker = require 'faker'
 
 mcFly = new McFly();
 
-_steps = [
-  {
-    guid: Guid.create()
-    name: 'step name fo realz'
-    actions: [{
+getRandTo = (to=10, min=2) ->
+  got = Math.floor(Math.random()*to)
+  if min
+    return _.max [min, got]
+  return got
+
+generate_random_steps = ->
+  amount = getRandTo()
+  steps = []
+
+  for s in [0..amount]
+    step_words = getRandTo(4)
+    action_amount = getRandTo(6)
+    actions = []
+    for a in [0..action_amount]
+      action_words = getRandTo(5)
+      actions.push
         guid: Guid.create()
-        action: 'move the screw'
-      },{
-        guid: Guid.create()
-        action: 'take the screw out'
-      }]
-  }, {
-    guid: Guid.create()
-    name: 'another step name'
-    actions: [{
-        guid: Guid.create()
-        action: 'move the screw'
-      },{
-        guid: Guid.create()
-        action: 'take the screw out'
-      }]
-  } , {
-    guid: Guid.create()
-    name: 'so many steps'
-    actions: [{
-        guid: Guid.create()
-        action: 'move the screw'
-      },{
-        guid: Guid.create()
-        action: 'take the screw out'
-      },{
-        guid: Guid.create()
-        action: 'put the screw back in'
-      }]
-  }
-]
+        action: faker.lorem.words(action_words).join(' ')
+        image: faker.image.technics(600, 350)+"/"+getRandTo(10)
+    steps.push
+      guid: Guid.create()
+      name: faker.lorem.words(step_words).join(' ')
+      actions: actions
+
+  return steps
+
+_steps = generate_random_steps()
 
 
 addStep = (step) ->
@@ -92,10 +85,12 @@ module.exports = {
     actions: [{
       guid: Guid.create()
       action: ''
+      image: faker.image.technics(600, 350)+"/"+getRandTo(10)
     }]
   action_template: ->
     guid: Guid.create()
     action: ''
+    image: faker.image.technics(600, 350)+"/"+getRandTo(10)
   StepStore: StepStore
   mcFly: mcFly
 }
