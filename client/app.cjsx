@@ -290,11 +290,14 @@ StepCreatorForm = React.createClass
 StepsController = React.createClass
   mixins: [StepStore.mixin]
 
+  getState: ->
+    steps: StepStore.getSteps()
+
   storeDidChange: ->
-    @setState(StepStore.getSteps())
+    @setState(@getState())
 
   getInitialState: ->
-    StepStore.getSteps()
+    @getState()
 
   render: ->
     <Grid>

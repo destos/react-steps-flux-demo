@@ -32,8 +32,12 @@ generate_random_steps = ->
 
   return steps
 
+# hold yer steps
 _steps = generate_random_steps()
+# _steps = []
 
+
+# store accessors
 
 addStep = (step) ->
   if not Guid.isGuid(step.guid)
@@ -61,7 +65,7 @@ updateStep = (step) ->
 
 StepStore = mcFly.createStore({
   getSteps: ->
-    steps: _steps
+    _steps
   }, (payload) ->
     switch payload.actionType
       when 'ADD_STEP'
