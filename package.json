@@ -42,6 +42,7 @@
     "react": "^0.13.2",
     "react-bootstrap": "^0.22.4",
     "react-onclickoutside": "^0.2.4",
+    "react-wysiwyg": "^1.0.5",
     "serve-static": "^1.9.2",
     "webpack": "^1.8.11",
     "webpack-stats-plugin": "0.0.4"
