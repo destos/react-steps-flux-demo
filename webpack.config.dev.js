@@ -24,5 +24,10 @@ module.exports = {
     new CleanPlugin(["dist"]),
     // if an asset errors during compiling don't include it.
     // new webpack.NoErrorsPlugin()
+    new webpack.DefinePlugin({
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+      }
+    })
   ]
 };

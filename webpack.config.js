@@ -21,7 +21,7 @@ module.exports = {
         include: path.join(__dirname, "client"),
         loaders: ["babel-loader?optional=runtime"] },
       { test: /\.(coffee|cjsx)$/,
-        loaders: ["react-hot", "coffee", "cjsx"]}
+        loaders: ["coffee", "cjsx"]}
     ]
   },
   resolve: {
@@ -51,6 +51,12 @@ module.exports = {
     new StatsWriterPlugin({
       path: path.join(__dirname, "dist/server"),
       filename: "stats.json"
+    }),
+
+    new webpack.DefinePlugin({
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV)
+      }
     })
   ]
 };
