@@ -24,7 +24,7 @@ generate_random_steps = ->
       actions.push
         guid: Guid.create()
         action: faker.lorem.words(action_words).join(' ')
-        image: faker.image.technics(600, 350)+"/"+getRandTo(10)
+        image: faker.image.technics(600, 350)+"/"+getRandTo(10)+'/'
     steps.push
       guid: Guid.create()
       name: faker.lorem.words(step_words).join(' ')
