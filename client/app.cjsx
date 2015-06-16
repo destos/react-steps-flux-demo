@@ -21,6 +21,7 @@ Thumbnail = require 'react-bootstrap/lib/Thumbnail'
 
 stepActions = require './steps/actions'
 
+
 DraggableMixin = {
   isPartOfDragGroup: (e) ->
     return _.includes e.target.parentNode.children, @dragged
@@ -91,7 +92,7 @@ EdiableActionItem = React.createClass
     editing: false
 
   onChange: (text) ->
-    @setState action: text
+    @setState(action: text)
 
   handleClickOutside: ->
     @setState(editing: false)
@@ -100,23 +101,22 @@ EdiableActionItem = React.createClass
     @setState(editing: true)
 
   render: ->
-    action = @props.action
-    actionNum = @props.num
+    {num, action} = @props
+    {editing} = @state
 
-    editing = @state.editing
     grabIcon = null
     # turn on grab icon if we're not editing the action
     if not editing
       grabIcon = <Glyphicon className="pull-right" style={cursor: 'move'} glyph="menu-hamburger"></Glyphicon>
     <ListGroupItem
         draggable="true"
-        data-id={actionNum}
+        data-id={{num}}
         className="clearfix"
         style={cursor: 'pointer'}
         onDoubleClick={@startEditing}
         {...@props}>
       <div className="pull-left">
-        {String.fromCharCode(actionNum + 97)}.&nbsp;
+        {String.fromCharCode(num + 97)}.&nbsp;
       </div>
       {grabIcon}
       <div
